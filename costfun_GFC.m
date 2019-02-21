@@ -1,0 +1,14 @@
+function [E, G] = costfun_GFC(param, X, Y,  U, beta,lambda,sigma2)
+[N, D] = size(X);
+M = size(U, 2);
+Alpha = reshape(param, [M D]);
+options=ml_options('Kernel','rbf', 'KernelParam', beta,'NN',5);
+options.GraphWeights= 'heat';
+options.GraphWeightParam=sqrt(sigma2);
+L=laplacian(X,'nn',options);
+E=lambda * trace(Alpha'*U'*L*U*Alpha);
+V = Y-(X+ U*Alpha);
+a = -2 / N / (2*sigma2)^(D/2);
+F = exp(-sum(V.^2, 2) / (2*sigma2));
+E = E + a * sum(F);
+G =  -a * U' * ( V .* repmat(F, [1 D]) / sigma2 ) + 2*lambda * U'* L * U *Alpha;
